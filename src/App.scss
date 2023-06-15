@@ -1,0 +1,196 @@
+@import url(https://fonts.googleapis.com/css?family=Fjalla+One);
+
+$bg: #000;
+$red: rgb(232, 4, 21);
+$white: #fff;
+$grey: rgb(162, 162, 162);
+$cont-size: 170px;
+$outer-size: $cont-size - 40;
+$inner-size: $outer-size - 30;
+$border-size: 6px;
+$sec: 1s;
+$bezier: cubic-bezier(0.4, -0.9, 0.9, 1);
+
+@mixin animation($name) {
+  @-webkit-keyframes #{$name} {
+    @content;
+  }
+  @-moz-keyframes #{$name} {
+    @content;
+  }
+  @-o-keyframes #{$name} {
+    @content;
+  }
+  @keyframes #{$name} {
+    @content;
+  }
+}
+
+@mixin animation-use($name, $time, $easing) {
+  -webkit-animation: $name $time infinite $easing;
+  -moz-animation: $name $time infinite $easing;
+  -o-animation: $name $time infinite $easing;
+  animation: $name $time infinite $easing;
+}
+
+@mixin animate($val, $colon) {
+  @include animation(to_ + $val) {
+    @for $i from 1 to $val {
+      #{100/$val*$i}% {
+        @if ($i < 10) {
+          content: $colon + "0" + $i;
+        } @else {
+          content: $colon + "" + $i;
+        }
+      }
+    }
+  }
+}
+
+@mixin pseudo($content) {
+  position: relative;
+  content: $content;
+}
+
+@mixin center($val) {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: $val;
+  height: $val;
+  margin: -$val/2 0 -$val/2;
+}
+
+@mixin delay($time) {
+  -webkit-animation-delay: $time;
+  animation-delay: $time;
+}
+
+@mixin once() {
+  -webkit-animation-iteration-count: 1;
+  animation-iteration-count: 1;
+  -webkit-animation-fill-mode: forwards;
+  animation-fill-mode: forwards;
+}
+
+@include animate(24, "");
+@include animate(60, ":");
+@include animate(100, ":");
+
+@include animation(time) {
+  to {
+    top: 100%;
+    opacity: 1;
+  }
+}
+
+@include animation(stop) {
+  70% {
+    border-radius: 6px;
+    @include center($inner-size - 40);
+  }
+  100% {
+    border-radius: 6px;
+    @include center($inner-size - 36);
+  }
+}
+
+body {
+  overflow: hidden;
+  background: $bg;
+
+  .container {
+    @include center($cont-size);
+
+    #btn {
+      display: none;
+
+      & + label:before {
+        @include center($outer-size);
+        content: "";
+        -webkit-transform: translate(-$border-size, -$border-size);
+        -ms-transform: translate(-$border-size, -$border-size);
+        transform: translate(-$border-size, -$border-size);
+        border-radius: 50%;
+        border: $border-size solid $white;
+        cursor: pointer;
+      }
+
+      & + label:after {
+        @include center($inner-size);
+        content: "";
+        border-radius: $inner-size/2;
+        background: $red;
+        cursor: pointer;
+      }
+
+      &:checked {
+        & + label:after {
+          @include animation-use(stop, 0.5 * $sec, $bezier);
+          @include once();
+        }
+
+        & ~ .time {
+          @include animation-use(time, 0.3 * $sec, linear);
+          @include once();
+          animation-delay: 0.3 * $sec;
+        }
+
+        & ~ .time .h_m:after {
+          @include animation-use(to_24, 86400 * $sec, linear);
+          @include delay(1800 * $sec);
+        }
+
+        & ~ .time .h_m:before {
+          @include animation-use(to_60, 3600 * $sec, linear);
+          @include delay(30 * $sec);
+        }
+
+        & ~ .time .s_ms:before {
+          @include animation-use(to_60, 60 * $sec, linear);
+          @include delay(0.5 * $sec);
+        }
+
+        & ~ .time .s_ms:after {
+          @include animation-use(to_100, $sec, linear);
+        }
+      }
+    }
+
+    .time {
+      position: absolute;
+      width: 100%;
+      top: 110%;
+      opacity: 0;
+
+      & > * {
+        display: inline-block;
+        width: 50%;
+        margin: -2px;
+        color: $grey;
+        font-family: "Fjalla One", sans-serif;
+        font-size: 1.3em;
+      }
+
+      .h_m:after {
+        float: right;
+        @include pseudo("00");
+      }
+
+      .h_m:before {
+        float: right;
+        @include pseudo(":00");
+      }
+
+      .s_ms:before {
+        float: left;
+        @include pseudo(":00");
+      }
+
+      .s_ms:after {
+        float: left;
+        @include pseudo(":00");
+      }
+    }
+  }
+}
