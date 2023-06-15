@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Loading from "./Loading";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function AudioRecorder() {
   const [audioBlob, setAudioBlob] = useState(null);
-  const [audioReplySrc, setAudioReplySrc] = useState("");
+  const [textReply, setTextReply] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRecord = async (e) => {
     e.preventDefault();
@@ -32,14 +34,14 @@ function AudioRecorder() {
 
   const handleSubmitAudio = async (e) => {
     e.preventDefault();
+    setLoading(true);
     if (audioBlob) {
       const formData = new FormData();
       formData.append("audio", audioBlob, "audio.wav");
       try {
         const response = await axios.post("/convert", formData);
-        const fileName = response.data;
-        console.log(fileName);
-        setAudioReplySrc(fileName);
+        setLoading(false);
+        setTextReply(response.data);
       } catch (error) {
         console.error(error);
       }
@@ -53,21 +55,19 @@ function AudioRecorder() {
       <button
         type="button"
         onClick={handleRecord}
-        className="btn btn-secondary"
-      >
+        className="btn btn-secondary">
         Record
       </button>
       <button
         type="button"
         onClick={handleSubmitAudio}
-        className="btn btn-primary"
-      >
+        className="btn btn-primary">
         Submit Audio
       </button>
-      {audioReplySrc && (
+      {loading && <Loading />}
+      {textReply && (
         <div className="mt-4">
-          <h2>Audio Reply</h2>
-          <audio controls src={audioReplySrc} className="w-100"></audio>
+          <h2>{textReply}</h2>
         </div>
       )}
     </div>

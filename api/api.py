@@ -2,8 +2,12 @@ from flask import Flask, request, send_file, jsonify
 from elevenlabs import generate, set_api_key, voices, save
 import os
 import uuid
+import whisper
+import numpy
+import librosa
 
 app = Flask(__name__)
+model = whisper.load_model("base")
 
 AUDIO_FOLDER = "audio"
 if not os.path.exists(AUDIO_FOLDER):
@@ -13,12 +17,14 @@ if not os.path.exists(AUDIO_FOLDER):
 @app.route("/convert", methods=["POST"])
 def convert():
     audio_file = request.files.get("audio")
-    if audio_file and audio_file.filename.endswith(".wav"):
+    if audio_file:
         file_name = str(uuid.uuid4()) + ".wav"
         file_path = os.path.join(AUDIO_FOLDER, file_name)
         audio_file.save(file_path)
-        # Return the file as an attachment
-        return jsonify(file_name)
+        data, sampleRate = librosa.load(file_path)
+        result = model.transcribe(numpy.array(data))
+        print(result["text"])
+        return result["text"]
     else:
         return jsonify("Invalid audio file.")
 
