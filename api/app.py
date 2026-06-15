@@ -1,5 +1,4 @@
 from flask import Flask, request, send_file, jsonify, session
-from elevenlabs import generate, set_api_key, voices, save
 import os
 import uuid
 import numpy
@@ -8,11 +7,15 @@ import openai
 import time
 import whisper
 
+from tts import get_tts_provider
+
 app = Flask(__name__)
-set_api_key(os.getenv("ELEVEN_KEY"))
 app.secret_key = os.getenv("SECRET_KEY")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 model = whisper.load_model("base")
+
+# Selects the TTS engine (ElevenLabs by default, 60db via TTS_PROVIDER=sixtydb).
+tts = get_tts_provider()
 
 audio_path = "audio"
 if not os.path.exists(audio_path):
@@ -68,9 +71,10 @@ def chat():
             session["messages"].pop(0)
 
         # Convert text to speech
-        audio = generate(text=chatbot_message, voice=voices()[-1])
-        chat_file_name = str(uuid.uuid4()) + ".wav"
-        save(audio=audio, filename=os.path.join(audio_path, chat_file_name))
+        audio = tts.synthesize(chatbot_message)
+        chat_file_name = str(uuid.uuid4()) + "." + tts.file_extension
+        with open(os.path.join(audio_path, chat_file_name), "wb") as f:
+            f.write(audio)
         return jsonify(
             {"user": user_text, "chat": chatbot_message, "audioSrc": chat_file_name}
         )
@@ -82,9 +86,10 @@ def chat():
 def generate_speech():
     data = request.get_json()
     text = data["text"]
-    audio = generate(text=text, voice=voices()[-1])
-    file_name = "speech.wav"
-    save(audio=audio, filename=os.path.join("audio", file_name))
+    audio = tts.synthesize(text)
+    file_name = "speech." + tts.file_extension
+    with open(os.path.join("audio", file_name), "wb") as f:
+        f.write(audio)
     return file_name
 
 

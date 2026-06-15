@@ -43,6 +43,24 @@ flask run
 
 For detailed deployment instructions and additional configuration options, please refer to the documentation.
 
+## Text-to-speech providers
+
+The backend speaks through a pluggable TTS provider (`api/tts/`) so the two
+engines are interchangeable and the routes (`/chat`, `/generate`) don't care
+which is used. Select one with the `TTS_PROVIDER` env var:
+
+| `TTS_PROVIDER` | Engine | Required config |
+|----------------|--------|-----------------|
+| `elevenlabs` (default) | ElevenLabs | `ELEVEN_KEY` |
+| `sixtydb` | [60db](https://docs.60db.ai) (`POST /tts-synthesize`) | `SIXTYDB_API_KEY` |
+
+Optional 60db overrides: `SIXTYDB_VOICE_ID`, `SIXTYDB_OUTPUT_FORMAT`
+(`mp3`/`wav`/`ogg`/`flac`, default `mp3`), `SIXTYDB_BASE_URL`.
+
+Copy `api/.env.example` to `api/.env` and fill in the keys. To add another
+provider, implement the `TTSProvider` interface in `api/tts/base.py` and register
+it in `api/tts/__init__.py`.
+
 ## Usage
 
 Once the application is up and running, you can engage in lifelike conversations with ChatGPT. Simply type your message in the input box or say it out loud to use our Speech Recognition API, and ChatGPT will respond using ElevenLabs AI text-to-speech to simulate a real human voice. Explore the application to experience the capabilities of RealVoiceGPT and discover new possibilities for voice-based AI interactions.
